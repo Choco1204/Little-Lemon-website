@@ -1,5 +1,4 @@
-// src/components/BookingForm.js
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { submitAPI } from "../api"; // Import submitAPI
 
 const BookingForm = ({ availableTimes, dispatch, onClose }) => {
@@ -10,7 +9,41 @@ const BookingForm = ({ availableTimes, dispatch, onClose }) => {
     occasion: "Birthday",
   });
 
-  const [isSubmitted, setIsSubmitted] = useState(false); // State to track successful submission
+  const [formErrors, setFormErrors] = useState({
+    date: "",
+    time: "",
+    guests: "",
+  });
+
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
+  // Effect to validate the form and check if all fields are valid
+  useEffect(() => {
+    validateForm();
+  }, [formData]);
+
+  const validateForm = () => {
+    const errors = {};
+
+    // Validate Date: Ensure it's not in the past
+    if (!formData.date) {
+      errors.date = "Date is required.";
+    } else if (new Date(formData.date) < new Date()) {
+      errors.date = "Date cannot be in the past.";
+    }
+
+    // Validate Time: Ensure time is selected
+    if (!formData.time) {
+      errors.time = "Time is required.";
+    }
+
+    // Validate Guests: Ensure at least 1 guest and no more than 20
+    if (!formData.guests || formData.guests < 1 || formData.guests > 20) {
+      errors.guests = "Number of guests must be between 1 and 20.";
+    }
+
+    setFormErrors(errors);
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -24,15 +57,21 @@ const BookingForm = ({ availableTimes, dispatch, onClose }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const submissionResult = submitAPI(formData); // Use submitAPI
-    if (submissionResult) {
-      console.log("Form Submitted:", formData);
-      setIsSubmitted(true); // Set submission state to true
-      setTimeout(() => {
-        onClose(); // Close the modal after a short delay
-      }, 2000); // Close after 2 seconds
+
+    // Only submit if no errors
+    if (Object.keys(formErrors).length === 0) {
+      const submissionResult = submitAPI(formData);
+      if (submissionResult) {
+        console.log("Form Submitted:", formData);
+        setIsSubmitted(true);
+        setTimeout(() => {
+          onClose(); // Close the modal after 2 seconds
+        }, 2000);
+      } else {
+        console.error("Submission failed");
+      }
     } else {
-      console.error("Submission failed");
+      console.log("Form has errors");
     }
   };
 
@@ -56,8 +95,12 @@ const BookingForm = ({ availableTimes, dispatch, onClose }) => {
               value={formData.date}
               onChange={handleChange}
               required
+              min={new Date().toISOString().split("T")[0]} // Prevent selecting past dates
               className="w-full p-2 mt-1 border rounded"
             />
+            {formErrors.date && (
+              <p className="text-red-600">{formErrors.date}</p>
+            )}
           </label>
 
           {/* Time - Dynamically updated */}
@@ -77,6 +120,9 @@ const BookingForm = ({ availableTimes, dispatch, onClose }) => {
                 </option>
               ))}
             </select>
+            {formErrors.time && (
+              <p className="text-red-600">{formErrors.time}</p>
+            )}
           </label>
 
           {/* Guests */}
@@ -92,6 +138,9 @@ const BookingForm = ({ availableTimes, dispatch, onClose }) => {
               required
               className="w-full p-2 mt-1 border rounded"
             />
+            {formErrors.guests && (
+              <p className="text-red-600">{formErrors.guests}</p>
+            )}
           </label>
 
           {/* Occasion */}
@@ -112,7 +161,8 @@ const BookingForm = ({ availableTimes, dispatch, onClose }) => {
           {/* Submit Button */}
           <button
             type="submit"
-            className="mt-4 bg-yellow-500 text-black font-semibold px-4 py-2 rounded hover:bg-yellow-600 transition"
+            disabled={Object.keys(formErrors).length > 0} // Disable if there are any errors
+            className="mt-4 bg-yellow-500 text-black font-semibold px-4 py-2 rounded hover:bg-yellow-600 transition disabled:bg-gray-300"
           >
             Submit Reservation
           </button>
