@@ -11,6 +11,7 @@ import Menu from "./pages/Menu";
 import OrderOnline from "./pages/OrderOnline";
 import "./App.css";
 import Booking from "./pages/Booking";
+import NotFound from "./pages/NotFound";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           <Route path="/menu" element={<Menu />} />
           <Route path="/order-online" element={<OrderOnline />} />
           <Route path="/booking" element={<Booking />} />
+          <Route path="*" element={<NotFound />} /> {/* 404 Page */}
         </Routes>
       </main>
       <Footer />
